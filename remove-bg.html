@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Remove Seal Background</title>
+<style>
+  body { font-family: sans-serif; background: #1a1a1a; color: #eee; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; gap: 20px; }
+  h2 { margin: 0; }
+  canvas { max-width: 400px; max-height: 400px; border: 1px solid #444; background: repeating-conic-gradient(#333 0% 25%, #222 0% 50%) 0 0 / 20px 20px; }
+  button { padding: 12px 28px; font-size: 16px; background: #7b3030; color: white; border: none; border-radius: 8px; cursor: pointer; }
+  button:hover { background: #9b4040; }
+  #status { color: #aaa; font-size: 14px; }
+</style>
+</head>
+<body>
+<h2>Wax Seal — Background Removal</h2>
+<canvas id="c"></canvas>
+<div id="status">Processing…</div>
+<button id="dl" style="display:none">Download seal.png</button>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const status = document.getElementById('status');
+const dlBtn = document.getElementById('dl');
+const THRESH = 238;
+
+const img = new Image();
+img.src = 'Seal.PNG';
+img.onload = () => {
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  ctx.drawImage(img, 0, 0);
+
+  const W = canvas.width, H = canvas.height;
+  const data = ctx.getImageData(0, 0, W, H);
+  const px = data.data; // RGBA flat array
+  status.textContent = `Loaded ${W}×${H}. Running BFS…`;
+
+  // BFS flood fill from all 4 edges
+  const visited = new Uint8Array(W * H);
+  const queue = new Int32Array(W * H); // store flat index
+  let head = 0, tail = 0;
+
+  const isWhite = (i) => px[i] >= THRESH && px[i+1] >= THRESH && px[i+2] >= THRESH;
+  const idx = (x, y) => (y * W + x) * 4;
+  const flat = (x, y) => y * W + x;
+
+  const seed = (x, y) => {
+    const fi = flat(x, y);
+    if (!visited[fi] && isWhite(idx(x, y))) {
+      visited[fi] = 1;
+      queue[tail++] = fi;
+    }
+  };
+
+  for (let x = 0; x < W; x++) { seed(x, 0); seed(x, H-1); }
+  for (let y = 0; y < H; y++) { seed(0, y); seed(W-1, y); }
+
+  const DX = [0, 0, 1, -1];
+  const DY = [1, -1, 0, 0];
+  let cleared = 0;
+
+  while (head < tail) {
+    const fi = queue[head++];
+    const x = fi % W, y = (fi / W) | 0;
+    const i4 = fi * 4;
+    // Make transparent
+    px[i4] = 0; px[i4+1] = 0; px[i4+2] = 0; px[i4+3] = 0;
+    cleared++;
+    for (let d = 0; d < 4; d++) {
+      const nx = x + DX[d], ny = y + DY[d];
+      if (nx >= 0 && nx < W && ny >= 0 && ny < H) {
+        const nfi = flat(nx, ny);
+        if (!visited[nfi] && isWhite(idx(nx, ny))) {
+          visited[nfi] = 1;
+          queue[tail++] = nfi;
+        }
+      }
+    }
+  }
+
+  // Soft edge: pixels next to transparent, fade proportionally to whiteness
+  for (let y = 1; y < H-1; y++) {
+    for (let x = 1; x < W-1; x++) {
+      const fi = flat(x, y);
+      if (visited[fi]) continue;
+      let nearTransp = false;
+      for (let d = 0; d < 4; d++) {
+        if (visited[flat(x + DX[d], y + DY[d])]) { nearTransp = true; break; }
+      }
+      if (!nearTransp) continue;
+      const i4 = fi * 4;
+      const r = px[i4], g = px[i4+1], b = px[i4+2];
+      const brightness = (r + g + b) / 3;
+      if (brightness > 200) {
+        const t = (brightness - 200) / 55; // 0 at 200, 1 at 255
+        px[i4+3] = Math.round(px[i4+3] * (1 - t));
+      }
+    }
+  }
+
+  ctx.putImageData(data, 0, 0);
+  status.textContent = `Done — removed ${cleared.toLocaleString()} background pixels. Preview below (checkered = transparent).`;
+  dlBtn.style.display = 'inline-block';
+};
+
+dlBtn.onclick = () => {
+  const a = document.createElement('a');
+  a.download = 'seal.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+};
+
+img.onerror = () => {
+  status.textContent = 'ERROR: Could not load Seal.PNG — make sure this HTML is in the same folder as Seal.PNG';
+};
+</script>
+</body>
+</html>
