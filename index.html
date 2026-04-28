@@ -563,14 +563,15 @@
       opacity: 0; pointer-events: none;
       transition: opacity .5s ease, border-color .3s ease, transform .25s ease;
     }
-    #music-btn.show          { opacity: 1; pointer-events: auto; }
-    #music-btn:hover         { border-color: var(--gold); transform: scale(1.08); }
-    #music-btn.on            { border-color: rgba(201,169,110,.65); }
-    #music-btn .ico          { position: absolute; transition: opacity .3s ease; }
-    #music-btn .ico-off      { opacity: 1; }
-    #music-btn .ico-on       { opacity: 0; }
-    #music-btn.on .ico-off   { opacity: 0; }
-    #music-btn.on .ico-on    { opacity: 1; }
+    #music-btn.show { opacity: 1; pointer-events: auto; }
+    #music-btn:hover { border-color: var(--gold); transform: scale(1.08); }
+    #music-btn.on   { border-color: rgba(201,169,110,.65); }
+    #music-btn .ico { font-size: 17px; line-height: 1;
+                      position: absolute; transition: opacity .25s ease; }
+    #music-btn .ico-off   { opacity: 1; }
+    #music-btn .ico-on    { opacity: 0; }
+    #music-btn.on .ico-off { opacity: 0; }
+    #music-btn.on .ico-on  { opacity: 1; }
 
 
     /* ═══════════════════════════════════════════
@@ -671,18 +672,8 @@
      MUSIC TOGGLE
      ═══════════════════════════════════════════════ -->
 <button id="music-btn" aria-label="Toggle background music" aria-pressed="false">
-  <svg class="ico ico-off" width="16" height="16" viewBox="0 0 24 24" fill="none"
-       stroke="#9a8a78" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="rgba(154,138,120,.12)"/>
-    <line x1="23" y1="9" x2="17" y2="15"/>
-    <line x1="17" y1="9" x2="23" y2="15"/>
-  </svg>
-  <svg class="ico ico-on" width="16" height="16" viewBox="0 0 24 24" fill="none"
-       stroke="#c9a96e" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="rgba(201,169,110,.12)"/>
-    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-  </svg>
+  <span class="ico ico-off">🔇</span>
+  <span class="ico ico-on">🔊</span>
 </button>
 
 <audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
@@ -771,7 +762,7 @@
         musicOn = true;
         musicBtn.classList.add('on');
         musicBtn.setAttribute('aria-pressed', 'true');
-        ramp(0.45, 2800);
+        ramp(0.4, 1500);
       }).catch(function () {
         /* blocked — button is visible so user can tap manually */
       });
@@ -812,7 +803,7 @@
           musicOn = true;
           musicBtn.classList.add('on');
           musicBtn.setAttribute('aria-pressed', 'true');
-          ramp(0.45, 1800);
+          ramp(0.4, 1200);
         }).catch(function () {});
       }
     }
